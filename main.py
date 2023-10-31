@@ -35,8 +35,19 @@ def is_nbconvert_installed():
 def convert_notebooks_to_html_batch(root_dir="."):
     for root, _, files in os.walk(root_dir):
         for file in files:
+            # Check if the file is a notebook
             if file.endswith(".ipynb"):
                 full_path = os.path.join(root, file)
+                output_file = os.path.join(root, file.replace(".ipynb", ".html"))
+
+                # Check if the output file already exists
+                if os.path.exists(output_file):
+                    answer = input(
+                        f"Output file {output_file} already exists. Do you want to overwrite it? (yes/no) ").strip().lower()
+                    if answer != "yes":
+                        print(f"Skipping {full_path}.")
+                        continue
+
                 print(f"Converting: {full_path}")
                 cmd = [
                     "jupyter",
