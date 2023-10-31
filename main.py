@@ -2,33 +2,33 @@ import os
 import subprocess
 
 
-# Check if nbconvert is installed, if not, install it
 def install_nbconvert():
+    # Check if pip is installed
+    try:
+        subprocess.run(["pip", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        print("pip is not installed. Cannot proceed with installing nbconvert.")
+        return False
+
     answer = input("jupyter nbconvert is not installed. Do you want to install it now? (yes/no) ").strip().lower()
     if answer == "yes":
         try:
-            # Run pip install nbconvert
             subprocess.run(["pip", "install", "nbconvert"], check=True)
             print("jupyter nbconvert installed successfully!")
             return True
-        # If pip install nbconvert failed, subprocess.CalledProcessError will be raised
-        except subprocess.CalledProcessError:
+        except (subprocess.CalledProcessError, FileNotFoundError):
             print("Error installing jupyter nbconvert.")
             return False
-    # If user does not want to install nbconvert, return False
     else:
         return False
 
 
-# Check if nbconvert is installed
 def is_nbconvert_installed():
     try:
-        # Run nbconvert --version
         subprocess.run(["jupyter", "nbconvert", "--version"], check=True, stdout=subprocess.PIPE,
                        stderr=subprocess.PIPE)
         return True
-    # If nbconvert is not installed, subprocess.CalledProcessError will be raised
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, FileNotFoundError):
         return False
 
 
@@ -38,8 +38,6 @@ def convert_notebooks_to_html_batch(root_dir="."):
             if file.endswith(".ipynb"):
                 full_path = os.path.join(root, file)
                 print(f"Converting: {full_path}")
-
-                # Convert using nbconvert
                 cmd = [
                     "jupyter",
                     "nbconvert",
@@ -48,7 +46,10 @@ def convert_notebooks_to_html_batch(root_dir="."):
                     full_path
                 ]
 
-                subprocess.run(cmd)
+                try:
+                    subprocess.run(cmd, check=True)
+                except (subprocess.CalledProcessError, FileNotFoundError):
+                    print(f"Error converting {full_path}. Moving on to next notebook.")
 
 
 if __name__ == "__main__":
