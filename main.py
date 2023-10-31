@@ -63,10 +63,32 @@ def convert_notebooks_to_html_batch(root_dir="."):
                     print(f"Error converting {full_path}. Moving on to next notebook.")
 
 
+def get_directory_from_user():
+    # Get directory path from user
+    dir_input = input("Enter the directory path (or press Enter to use the current directory): ").strip()
+
+    # If the user did not enter anything, use the current directory
+    if not dir_input:
+        return "."
+
+    # Check if the path is valid
+    if not os.path.exists(dir_input) or not os.path.isdir(dir_input):
+        print(f"Error: The path '{dir_input}' is not a valid directory.")
+        return None
+
+    return dir_input
+
+
+# Main script
 if __name__ == "__main__":
     if not is_nbconvert_installed():
         if not install_nbconvert():
             print("Exiting script as jupyter nbconvert is not available.")
             exit()
 
-    convert_notebooks_to_html_batch()
+    directory = get_directory_from_user()
+    if directory:
+        convert_notebooks_to_html_batch(directory)
+    else:
+        print("Operation aborted due to invalid directory.")
+
