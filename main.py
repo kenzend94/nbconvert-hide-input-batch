@@ -2,6 +2,7 @@ import os
 import subprocess
 
 
+# TODO: Scan directories and ask user any directory they want to ignore
 def install_nbconvert():
     # Check if pip is installed
     try:
