@@ -82,9 +82,17 @@ def get_directory_from_user():
     return dir_input
 
 
-def get_subfolders_to_exclude():
-    subfolders_to_exclude = input("Enter the names of subfolders to exclude, separated by commas (e.g., 'folder1,folder2'): ")
-    return [folder.strip() for folder in subfolders_to_exclude.split(',')] if subfolders_to_exclude else []
+def get_subfolders_to_exclude(directory):
+    print("Subfolders in '{}':".format(directory))
+    subfolders = [f.name for f in os.scandir(directory) if f.is_dir()]
+    for idx, folder in enumerate(subfolders):
+        print("[{}] {}".format(idx, folder))
+
+    indices = input("Enter the indices of subfolders to exclude, separated by commas (e.g., '0,3'): ")
+    indices = [int(idx.strip()) for idx in indices.split(',')] if indices else []
+
+    subfolders_to_exclude = [subfolders[idx] for idx in indices if 0 <= idx < len(subfolders)]
+    return subfolders_to_exclude
 
 
 # Main script
@@ -100,4 +108,3 @@ if __name__ == "__main__":
         convert_notebooks_to_html_batch(directory, excluded_subfolders)
     else:
         print("Operation aborted due to invalid directory.")
-
