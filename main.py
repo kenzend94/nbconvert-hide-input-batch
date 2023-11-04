@@ -33,8 +33,10 @@ def is_nbconvert_installed():
         return False
 
 
-def convert_notebooks_to_html_batch(root_dir="."):
-    for root, _, files in os.walk(root_dir):
+def convert_notebooks_to_html_batch(directory, excluded_subfolders):
+    for root, dirs, files in os.walk(directory):
+        # Remove the excluded subfolders from the list of directories to search
+        dirs[:] = [d for d in dirs if d not in excluded_subfolders]
         for file in files:
             # Check if the file is a notebook
             if file.endswith(".ipynb"):
@@ -80,6 +82,11 @@ def get_directory_from_user():
     return dir_input
 
 
+def get_subfolders_to_exclude():
+    subfolders_to_exclude = input("Enter the names of subfolders to exclude, separated by commas (e.g., 'folder1,folder2'): ")
+    return [folder.strip() for folder in subfolders_to_exclude.split(',')] if subfolders_to_exclude else []
+
+
 # Main script
 if __name__ == "__main__":
     if not is_nbconvert_installed():
@@ -89,7 +96,8 @@ if __name__ == "__main__":
 
     directory = get_directory_from_user()
     if directory:
-        convert_notebooks_to_html_batch(directory)
+        excluded_subfolders = get_subfolders_to_exclude()  # Get the list of subfolders to exclude
+        convert_notebooks_to_html_batch(directory, excluded_subfolders)
     else:
         print("Operation aborted due to invalid directory.")
 
