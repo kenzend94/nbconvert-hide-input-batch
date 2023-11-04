@@ -34,6 +34,9 @@ def is_nbconvert_installed():
 
 
 def convert_notebooks_to_html_batch(directory, excluded_subfolders):
+    # Initialize overwrite_all to None
+    overwrite_all = None
+
     for root, dirs, files in os.walk(directory):
         # Remove the excluded subfolders from the list of directories to search
         dirs[:] = [d for d in dirs if d not in excluded_subfolders]
@@ -43,13 +46,23 @@ def convert_notebooks_to_html_batch(directory, excluded_subfolders):
                 full_path = os.path.join(root, file)
                 output_file = os.path.join(root, file.replace(".ipynb", ".html"))
 
-                # Check if the output file already exists
-                if os.path.exists(output_file):
+                # If we haven't already set overwrite_all, check if the output file already exists
+                if overwrite_all is None and os.path.exists(output_file):
                     answer = input(
-                        f"Output file {output_file} already exists. Do you want to overwrite it? (yes/no) ").strip().lower()
-                    if answer != "yes":
+                        f"Output file {output_file} already exists. Do you want to overwrite it? (yes/no/all): "
+                    ).strip().lower()
+                    if answer == "all":
+                        overwrite_all = True
+                    elif answer == "yes":
+                        overwrite_all = False
+                    else:
                         print(f"Skipping {full_path}.")
                         continue
+
+                # If overwrite_all is False, we continue to the next file without overwriting
+                elif overwrite_all is False and os.path.exists(output_file):
+                    print(f"Skipping {full_path}.")
+                    continue
 
                 print(f"Converting: {full_path}")
                 cmd = [
@@ -84,15 +97,39 @@ def get_directory_from_user():
 
 def get_subfolders_to_exclude(directory):
     print("Subfolders in '{}':".format(directory))
+
+    # Get the list of subfolders
     subfolders = [f.name for f in os.scandir(directory) if f.is_dir()]
+
+    # Print the list of subfolders
     for idx, folder in enumerate(subfolders):
         print("[{}] {}".format(idx, folder))
 
-    indices = input("Enter the indices of subfolders to exclude, separated by commas (e.g., '0,3'): ")
-    indices = [int(idx.strip()) for idx in indices.split(',')] if indices else []
+    while True:
+        indices_input = input("Enter the indices of subfolders to exclude, separated by commas (e.g., '0,3'): ").strip()
+        if not indices_input:
+            print("No subfolders will be excluded.")
+            return []  # No input means no exclusions
 
-    subfolders_to_exclude = [subfolders[idx] for idx in indices if 0 <= idx < len(subfolders)]
-    return subfolders_to_exclude
+        # Split the input by commas and strip whitespace from each part
+        parts = indices_input.split(',')
+        if all(part.strip().isdigit() for part in parts):  # Check if all parts are digits after stripping whitespace
+            try:
+                indices = [int(part.strip()) for part in parts]
+                # Check if all indices are within the valid range
+                if all(0 <= idx < len(subfolders) for idx in indices):
+                    excluded_subfolders = [subfolders[idx] for idx in indices]
+                    # Print the confirmation message
+                    print("You have chosen to exclude the following subfolders:")
+                    for folder in excluded_subfolders:
+                        print(folder)
+                    return excluded_subfolders
+                else:
+                    print("Invalid indices. Some indices are out of range. Please enter valid indices separated by commas.")
+            except ValueError:  # Just as an extra precaution
+                print("Invalid input. Please enter numeric indices separated by commas.")
+        else:
+            print("Invalid input. Make sure to use commas to separate indices and only enter numbers.")
 
 
 # Main script
@@ -104,7 +141,7 @@ if __name__ == "__main__":
 
     directory = get_directory_from_user()
     if directory:
-        excluded_subfolders = get_subfolders_to_exclude()  # Get the list of subfolders to exclude
+        excluded_subfolders = get_subfolders_to_exclude(directory)  # Get the list of subfolders to exclude
         convert_notebooks_to_html_batch(directory, excluded_subfolders)
     else:
         print("Operation aborted due to invalid directory.")
